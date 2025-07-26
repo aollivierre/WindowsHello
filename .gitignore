@@ -1,0 +1,36 @@
+# PowerShell Module Build Outputs
+Output/
+BuildOutput/
+Release/
+
+# Test Results
+TestResults/
+*.xml
+
+# Logs
+*.log
+logs/
+
+# IDE and Editor files
+.vscode/
+.vs/
+*.suo
+*.user
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+~$*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# PowerShell specific
+*.ps1xml.bak
+
+# Windows Hello specific
+*.evtx
+*.etl
