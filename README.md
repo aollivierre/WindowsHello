@@ -8,9 +8,8 @@ Windows Hello for Business diagnostics and management.
 |---|---|
 | [`Invoke-WHFBAudit.ps1`](Invoke-WHFBAudit.ps1) | **Diagnostic auditor.** Captures all 12 data points needed to triage recurring PIN failures and produces a self-contained HTML report. Diagnosis only — no remediation. |
 | [`Enable-WindowsHello.ps1`](Enable-WindowsHello.ps1) | Configures the `PassportForWork` policy and other registry values to enable WHFB on a workstation. |
-| [`Module/WHfB-Diagnostics/`](Module/WHfB-Diagnostics) | PowerShell module with focused diagnostic cmdlets (e.g., `Get-WhfbAuthStatus`). |
-| [`Archive/`](Archive) | Older interactive diagnostic script kept for reference. |
 | [`docs/`](docs) | Reference documentation — see below. |
+| [`Archive/`](Archive) | Older / deprecated artifacts kept for historical reference. Includes the v0.1.0 `WHfB-Diagnostics` module (superseded by `Invoke-WHFBAudit.ps1` — see [its CHANGELOG](Archive/Module-WHfB-Diagnostics-v0.1.0/CHANGELOG.md)). |
 
 ## Documentation
 
