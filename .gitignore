@@ -34,3 +34,8 @@ Desktop.ini
 # Windows Hello specific
 *.evtx
 *.etl
+
+# Invoke-WHFBAudit.ps1 output
+Reports/
+WHFB-Audit-*.html
+WHFB-Audit-Raw-*/
