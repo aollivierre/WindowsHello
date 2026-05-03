@@ -2,7 +2,7 @@
 .SYNOPSIS
     WHFB (Windows Hello for Business) diagnostic and audit script.
     Captures all 12 data points from the BW Neepawa field guide and produces
-    a self-contained HTML report. DIAGNOSIS ONLY — no remediation actions.
+    a self-contained HTML report. DIAGNOSIS ONLY -- no remediation actions.
 
 .DESCRIPTION
     Run on the affected workstation in the user context that experiences PIN
@@ -319,7 +319,7 @@ $trustModel = 'Unknown'
 if ($dsregFields['OnPremTgt'] -eq 'YES') {
     $trustModel = 'Cloud Kerberos Trust (likely)'
 } elseif ($dsregFields['DomainJoined'] -eq 'YES' -and $dsregFields['AzureAdJoined'] -eq 'YES') {
-    $trustModel = 'Hybrid (Key Trust or Cert Trust — see policy section)'
+    $trustModel = 'Hybrid (Key Trust or Cert Trust -- see policy section)'
 } elseif ($dsregFields['AzureAdJoined'] -eq 'YES') {
     $trustModel = 'Cloud-only / Entra Joined'
 } elseif ($dsregFields['DomainJoined'] -eq 'YES') {
@@ -364,7 +364,7 @@ if ($dsregFields['TpmProtected'] -ne 'YES') {
 
 if ($trustModel -like '*Hybrid*') {
     Add-Finding -Status 'INFO' -Section 'dsregcmd' `
-        -Title 'Hybrid join detected — confirm Cloud Kerberos Trust vs Key Trust' `
+        -Title 'Hybrid join detected -- confirm Cloud Kerberos Trust vs Key Trust' `
         -Detail 'OnPremTgt is not YES. If WHFB is configured for hybrid sign-in, Cloud Kerberos Trust requires OnPremTgt=YES. A NO here on a hybrid box implies Key Trust or Cert Trust is in use, which exposes the deployment to msDS-KeyCredentialLink drift and CVE-2025-26647 NTAuth chain enforcement.' `
         -Hypothesis 'Class 1: Key Trust drift (if Key Trust is the configured model)'
 }
@@ -496,9 +496,9 @@ $ncProj = $ncFiltered | Select-Object @{n='Time';e={$_.TimeCreated}}, Id, LevelD
 
 # Hex error fingerprinting
 $hexFingerprint = @{
-    '0x80090010' = 'Class 4: NTE_PERM — KB5060842/KB5062553 UsePassportForWork user-scope bug fingerprint (with Event 7055/7703)'
-    '0x80090011' = 'Class 8: NTE_NOT_FOUND — Key not found (NGC container missing the key)'
-    '0x80090016' = 'Class 8: NTE_BAD_KEYSET — Keyset does not exist (corrupted container)'
+    '0x80090010' = 'Class 4: NTE_PERM -- KB5060842/KB5062553 UsePassportForWork user-scope bug fingerprint (with Event 7055/7703)'
+    '0x80090011' = 'Class 8: NTE_NOT_FOUND -- Key not found (NGC container missing the key)'
+    '0x80090016' = 'Class 8: NTE_BAD_KEYSET -- Keyset does not exist (corrupted container)'
     '0x80090029' = 'Class 7: TPM not setup'
     '0xC000005E' = 'Class 2: STATUS_NO_LOGON_SERVERS (cannot reach DC; PRT/Cloud Kerberos cascade)'
     '0xC000006D' = 'Class 6: STATUS_LOGON_FAILURE (24H2 UPN binding drift)'
@@ -531,7 +531,7 @@ if ($evt7055 -and $evt7703) {
     Add-Finding -Status 'CRITICAL' -Section 'Application log' `
         -Title "Application Events 7055 + 7703 BOTH present (the smoking-gun fingerprint)" `
         -Detail "7055 hits: $($evt7055.Count); 7703 hits: $($evt7703.Count). Most recent 7055: $($evt7055[0].TimeCreated). Most recent 7703: $($evt7703[0].TimeCreated). This pairing combined with 0x80090010 in NCrypt is the published fingerprint of the KB5060842/KB5062553 UsePassportForWork user-scope bug. Workaround: re-scope Intune profile from User to Device, OR set HKLM\SOFTWARE\Microsoft\Policies\PassportForWork\UserPassportForWork=1 and reboot, OR install KB5065789." `
-        -Hypothesis 'Class 4: KB5060842/KB5062553 UsePassportForWork user-scope bug — HIGHEST PRIORITY'
+        -Hypothesis 'Class 4: KB5060842/KB5062553 UsePassportForWork user-scope bug -- HIGHEST PRIORITY'
 } elseif ($evt7055) {
     Add-Finding -Status 'WARN' -Section 'Application log' -Title "Event 7055 present (NGC provisioning failed)" `
         -Detail "Hits: $($evt7055.Count). Most recent: $($evt7055[0].TimeCreated)." `
@@ -561,11 +561,11 @@ if ($IsDC -and -not $SkipDCEvents) {
     $evt45 = $kdcEvents | Where-Object Id -eq 45
     $evt21 = $kdcEvents | Where-Object Id -eq 21
     if ($evt21) {
-        Add-Finding -Status 'CRITICAL' -Section 'KDC' -Title "KDC Event 21 (DENY) — CVE-2025-26647 enforcement active" `
+        Add-Finding -Status 'CRITICAL' -Section 'KDC' -Title "KDC Event 21 (DENY) -- CVE-2025-26647 enforcement active" `
             -Detail "Hits: $($evt21.Count). Client cert chain does NOT terminate at NTAuth. Key Trust authentication will fail until NTAuth store is corrected." `
             -Hypothesis 'Class 5: CVE-2025-26647 NTAuth chain enforcement'
     } elseif ($evt45) {
-        Add-Finding -Status 'WARN' -Section 'KDC' -Title "KDC Event 45 (AUDIT) — CVE-2025-26647 audit warnings" `
+        Add-Finding -Status 'WARN' -Section 'KDC' -Title "KDC Event 45 (AUDIT) -- CVE-2025-26647 audit warnings" `
             -Detail "Hits: $($evt45.Count). NTAuth chain not validated; deny mode (Aug+ 2025) will start failing these auths. Ensure issuing CA chain anchored in NTAuth before enforcement." `
             -Hypothesis 'Class 5: CVE-2025-26647 (audit, pre-enforcement)'
     }
@@ -661,7 +661,7 @@ try {
 }
 $certutilOut | Out-File (Join-Path $rawDumpDir 'certutil-passport-keys.txt') -Encoding utf8
 
-# Parse key container names — they typically include the user UPN
+# Parse key container names -- they typically include the user UPN
 $ngcKeys = @()
 $rxKeyName = '(?m)^\s*(?<name>(login\.windows\.net|FIDO|FIDO_AUTHENTICATOR|//9DPC|.+ngc.+|.+Hello.+))\s*$'
 $kc = [regex]::Matches($certutilOut, '(?ms)Key\s+Container\s*=\s*(.+?)\r?\n')
@@ -697,7 +697,7 @@ if ($currentUpn -and $ngcKeys) {
 $ngcKeyHtml += '<h4>certutil output</h4>'
 $ngcKeyHtml += Convert-PreToHtml $certutilOut
 
-# Ngc directory listing (LocalService) — needs elevation
+# Ngc directory listing (LocalService) -- needs elevation
 $ngcDirHtml = '<h4>Ngc / Crypto directory layout</h4>'
 $ngcPaths = @(
     'C:\Windows\ServiceProfiles\LocalService\AppData\Local\Microsoft\Ngc',
@@ -878,7 +878,7 @@ if ($upfw) {
     $polBody += Convert-ObjectToHtmlTable -Objects $upfw
 }
 
-# UseCloudTrustForOnPremAuth, UseCertificateForOnPremAuth — trust model controls
+# UseCloudTrustForOnPremAuth, UseCertificateForOnPremAuth -- trust model controls
 $tm = $polEntries | Where-Object { $_.Name -in 'UseCloudTrustForOnPremAuth','UseCertificateForOnPremAuth','UseHelloCertificatesAsSmartCardCertificates','Enabled' }
 if ($tm) {
     $polBody += '<h4>Trust-model and Enabled flags</h4>'
@@ -1171,7 +1171,7 @@ $nav
 $execSummary
 $sectionsHtml
 </main>
-<footer style="padding:18px 32px;color:#789;font-size:12px;">Diagnostic capture only — no remediation actions performed. Raw outputs saved to <code>$(HtmlEncode $rawDumpDir)</code>.</footer>
+<footer style="padding:18px 32px;color:#789;font-size:12px;">Diagnostic capture only -- no remediation actions performed. Raw outputs saved to <code>$(HtmlEncode $rawDumpDir)</code>.</footer>
 </body></html>
 "@
 
