@@ -1,0 +1,54 @@
+name: unicode-check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ascii-check:
+    name: ascii-only via URT (single source of truth)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v5
+
+      - name: Checkout UnicodeReplacementTool (canonical mapping table)
+        uses: actions/checkout@v5
+        with:
+          repository: aollivierre/UnicodeReplacementTool
+          path: _urt
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run URT in --preview mode
+        shell: bash
+        run: |
+          set -o pipefail
+          python _urt/unicode_replacer.py \
+                 --preview \
+                 . \
+                 --recursive \
+                 --pattern '*.py' '*.ps1' '*.psm1' '*.psd1' '*.toml' \
+                           '*.yml' '*.yaml' '*.sh' '*.bat' '*.cmd' \
+                 | tee urt-preview.txt
+
+          # URT prints "Files with Unicode: <n>" in its summary.
+          # Markdown is exempt; we don't include *.md in --pattern.
+          if grep -E "Files with Unicode: [1-9]" urt-preview.txt > /dev/null; then
+            echo ""
+            echo "URT found Unicode in tracked scripts/config."
+            echo "Fix locally with the same command (without --preview):"
+            echo ""
+            echo "  git clone https://github.com/aollivierre/UnicodeReplacementTool _urt"
+            echo "  python _urt/unicode_replacer.py --yes --no-backup --recursive \\"
+            echo "         --pattern '*.py' '*.ps1' '*.psm1' '*.psd1' '*.toml' \\"
+            echo "                   '*.yml' '*.yaml' '*.sh' '*.bat' '*.cmd' \\"
+            echo "         ."
+            exit 1
+          fi
+          echo ""
+          echo "ascii-check: URT preview shows zero replacements needed."
