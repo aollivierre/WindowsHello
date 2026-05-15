@@ -1,0 +1,33 @@
+# WHFB-Remediation-AppReg / .gitignore
+#
+# These scripts generate timestamped output folders that contain an obfuscated
+# PFX (private key), the tenant id, app id, device names, and other
+# tenant-specific identifiers. The obfuscation (XOR 0x5A + base64) is
+# trivially reversible - treat the obfuscated PFX exactly like a plaintext
+# PFX. DO NOT commit any of it.
+
+# Timestamped run-output folders (e.g. 20260514_185421/)
+[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/
+
+# Belt-and-suspenders: catch per-file patterns at any depth.
+**/whfb-remediation-config.json
+**/whfb-remediation-config.psd1
+**/Config-Reference-PLAIN-TEXT-DELETE-ME.txt
+**/whfb-remediation-public.cer
+**/whfb-remediation-app-manifest-with-cert.json
+**/whfb-remediation-app-result.json
+**/whfb-remediation-objects.json
+
+# Live-tenant catalog / discovery dumps written next to the scripts.
+intune-surface-discovery.json
+whfb-setting-defs.json
+
+# Cert containers anywhere - we never commit private keys.
+*.pfx
+*.p12
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
