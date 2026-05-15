@@ -8,6 +8,7 @@ Windows Hello for Business diagnostics and management.
 |---|---|
 | [`Invoke-WHFBAudit.ps1`](Invoke-WHFBAudit.ps1) | **Diagnostic auditor.** Captures all 12 data points needed to triage recurring PIN failures and produces a self-contained HTML report. Diagnosis only — no remediation. |
 | [`Enable-WindowsHello.ps1`](Enable-WindowsHello.ps1) | Configures the `PassportForWork` policy and other registry values to enable WHFB on a workstation. |
+| [`Remove-NgcContainer.ps1`](Remove-NgcContainer.ps1) | **WHFB Step 2 remediation.** Clears the corrupt NGC / Microsoft Passport container for the signed-in user (`certutil -deleteHelloContainer`). Designed to be deployed via Intune as a user-context PowerShell script *after* the WHFB-disable policy has applied. Includes pre-state dump, transcript logging, and an explicit Win11 passkey-wipe caveat in the header. |
 | [`docs/`](docs) | Reference documentation — see below. |
 | [`Archive/`](Archive) | Older / deprecated artifacts kept for historical reference. Includes the v0.1.0 `WHfB-Diagnostics` module (superseded by `Invoke-WHFBAudit.ps1` — see [its CHANGELOG](Archive/Module-WHfB-Diagnostics-v0.1.0/CHANGELOG.md)). |
 
@@ -32,11 +33,32 @@ cd WindowsHello
 
 Typical run takes 8–15 seconds and produces a single self-contained HTML report (~30–80 KB) plus a raw-dump folder.
 
+> **Shared workstation with more than one affected user?** A single run captures per-user data for the *running* user only. See [Shared PCs / multiple affected users](#shared-pcs--multiple-affected-users) below — the audit will warn you when it detects other Entra profiles on the device that weren't audited.
+
 ### Configure WHFB on a fresh workstation
 
 ```powershell
 .\Enable-WindowsHello.ps1   # requires elevation
 ```
+
+## Shared PCs / multiple affected users
+
+The audit splits into two halves:
+
+| Scope | What is captured | What you must do |
+|---|---|---|
+| **Device-wide** (one run per device covers everyone) | Event logs (HelloForBusiness/Operational, User Device Registration, AAD/Operational, Crypto-NCrypt, Application 7055/7703, KDC, TPM-WMI), `dsregcmd /status`, `Get-Tpm`, network reachability, OS / hotfix inventory. | Run once on the device. |
+| **Per-user** (scoped to the user the script runs as) | NGC keys via `certutil -csp "Microsoft Passport Key Storage Provider" -key`, UPN drift via `whoami /upn`, HKCU `PassportForWork` policy registry tree, the executive-summary `User:` line. | Run **once for each affected user** while signed in as that user. |
+
+On a shared PC (e.g. a front-desk machine where both `admin-cci@…` and `reservations@…` see the PIN failure), a single run is **not** sufficient evidence for the per-user findings — it only proves the corruption for whoever launched the script. The `dsregcmd`, event-log, and TPM signals reflect everyone, but the headline "No Microsoft Passport KSP keys for current user" / `certutil` output / HKCU-policy tree do not.
+
+**The auditor now detects this:** Step 0a enumerates `HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList`, filters to Entra-joined local profiles (`S-1-12-1-*` SIDs under `C:\Users\`), and emits a `WARN` finding listing the other profiles when the audit was launched as only one of several Entra users on the device. The executive-summary `User:` line is your scope indicator.
+
+Recommended workflow on a shared PC:
+
+1. Sign in as the first affected user → run `.\Invoke-WHFBAudit.ps1` → save the HTML.
+2. Sign out, sign in as the next affected user → run again → save that HTML alongside.
+3. Compare the per-user "NGC keys" and HKCU-policy sections across the reports; device-wide sections will be identical.
 
 ## Prerequisites
 
