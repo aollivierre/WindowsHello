@@ -10,6 +10,7 @@ Windows Hello for Business diagnostics and management.
 | [`Enable-WindowsHello.ps1`](Enable-WindowsHello.ps1) | Configures the `PassportForWork` policy and other registry values to enable WHFB on a workstation. |
 | [`Remove-NgcContainer.ps1`](Remove-NgcContainer.ps1) | **WHFB Step 2 remediation.** Clears the corrupt NGC / Microsoft Passport container for the signed-in user (`certutil -deleteHelloContainer`). Designed to be deployed via Intune as a user-context PowerShell script *after* the WHFB-disable policy has applied. Includes pre-state dump, transcript logging, and an explicit Win11 passkey-wipe caveat in the header. |
 | [`docs/`](docs) | Reference documentation — see below. |
+| [`WHFB-Remediation-AppReg/`](WHFB-Remediation-AppReg) | **Remediation automation.** Cert-auth Entra app registration (12 Graph perms, 24h ephemeral cert) plus 14 Python scripts that create the unassigned remediation objects in Intune — security group, Endpoint Security Account-Protection policy disabling WHFB, Settings Catalog policy enabling security-key sign-in, additive Web Sign-In policy, and the user-context PowerShell script that clears the NGC container. See the [folder README](WHFB-Remediation-AppReg/README.md). |
 | [`Archive/`](Archive) | Older / deprecated artifacts kept for historical reference. Includes the v0.1.0 `WHfB-Diagnostics` module (superseded by `Invoke-WHFBAudit.ps1` — see [its CHANGELOG](Archive/Module-WHfB-Diagnostics-v0.1.0/CHANGELOG.md)). |
 
 ## Documentation

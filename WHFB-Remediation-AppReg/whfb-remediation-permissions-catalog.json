@@ -1,0 +1,74 @@
+[
+  {
+    "id": "b0afded3-3588-46d8-8b3d-9842eff778da",
+    "name": "AuditLog.Read.All",
+    "description": "Read audit log activities without a signed-in user. Verification: confirm sign-in / token churn (AADSTS) has quieted after remediation.",
+    "category": "verification-read"
+  },
+  {
+    "id": "7438b122-aefc-4978-80ed-43db9fcc7715",
+    "name": "Device.Read.All",
+    "description": "Read the organization's device objects without a signed-in user. Used to locate <TARGET-DEVICE-NAME> (and other front-desk PCs) to add to the FrontDesk-SharedPCs group.",
+    "category": "write-action"
+  },
+  {
+    "id": "9241abd9-d0e6-425a-bd4f-47ba86e767a4",
+    "name": "DeviceManagementConfiguration.ReadWrite.All",
+    "description": "Read and write Intune device configuration and endpoint security policies without a signed-in user. Step 1: create/assign the Account protection policy that disables WHFB. Step 4: create/assign the Custom OMA-URI profile for security-key sign-in.",
+    "category": "write-action"
+  },
+  {
+    "id": "5b07b0dd-2377-4e44-a38d-703f09a0dc3c",
+    "name": "DeviceManagementManagedDevices.PrivilegedOperations.All",
+    "description": "Perform privileged operations on Intune managed devices without a signed-in user. Used to trigger a device sync so the WHFB-disable policy applies before the container reset (Step 1 note).",
+    "category": "write-action"
+  },
+  {
+    "id": "2f51be20-0bb4-4fed-bf7b-db946066c75e",
+    "name": "DeviceManagementManagedDevices.Read.All",
+    "description": "Read properties of Intune-managed devices without a signed-in user. Used to resolve the managed-device record for <TARGET-DEVICE-NAME> and confirm policy assignment state.",
+    "category": "write-action"
+  },
+  {
+    "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+    "name": "Directory.Read.All",
+    "description": "Read directory data (users, groups, apps) without a signed-in user. General resolution support for the remediation and verification steps.",
+    "category": "verification-read"
+  },
+  {
+    "id": "62a82d76-70ea-41e2-9197-370581804d09",
+    "name": "Group.ReadWrite.All",
+    "description": "Read and write all groups without a signed-in user. Step 1: create the FrontDesk-SharedPCs device group and add the front-desk PCs as members.",
+    "category": "write-action"
+  },
+  {
+    "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+    "name": "Policy.Read.All",
+    "description": "Read all organization policies without a signed-in user. Verification: confirm the authentication methods policy reflects the FIDO2/passkey enablement.",
+    "category": "verification-read"
+  },
+  {
+    "id": "29c18626-4985-4dcd-85c0-193eef327366",
+    "name": "Policy.ReadWrite.AuthenticationMethod",
+    "description": "Read and write the Entra authentication methods policy without a signed-in user. Step 3: enable the Passkey (FIDO2) authentication method and configure self-service registration.",
+    "category": "write-action"
+  },
+  {
+    "id": "df021288-bdef-4463-88db-98f22de89214",
+    "name": "User.Read.All",
+    "description": "Read user profiles without a signed-in user. Used to resolve the affected staff accounts (affected staff) for targeting and verification.",
+    "category": "verification-read"
+  },
+  {
+    "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
+    "name": "UserAuthenticationMethod.Read.All",
+    "description": "Read users' authentication methods without a signed-in user. Verification (Step 5): confirm each staff member has registered their primary and backup YubiKey.",
+    "category": "verification-read"
+  },
+  {
+    "id": "9255e99d-faf5-445e-bbf7-cb71482737c4",
+    "name": "DeviceManagementScripts.ReadWrite.All",
+    "description": "Allows the app to read and write Microsoft Intune device compliance scripts, device management scripts, device shell scripts, device custom attribute shell scripts and device health scripts, without a signed-in user.",
+    "category": "write-action"
+  }
+]
