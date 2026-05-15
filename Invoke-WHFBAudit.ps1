@@ -264,6 +264,82 @@ Add-Section -Id 'env' -Title '0. Environment, OS build, and patch level' `
     -Description 'OS build, Windows release, BIOS, and WHFB-relevant hotfix inventory. Flags 24H2 systems missing KB5065789 (the UsePassportForWork user-scope bug fix).' `
     -BodyHtml ($envBody + $hotfixHtml)
 
+# ---------- 0a. Multi-profile coverage on this device ----------
+# This audit runs in ONE user context. Several sections below (NGC keys via
+# certutil, whoami /upn, HKCU PassportForWork registry tree) capture DATA FOR
+# THE CURRENT USER ONLY. On shared PCs with multiple affected Entra accounts,
+# the audit must be re-run as each affected user to get complete per-user
+# evidence. Device-wide signals (event logs, dsregcmd, TPM, network) cover
+# all users regardless. This step warns when other Entra profiles are
+# present on the device but not covered by the current run.
+
+Write-Host "[*] Step 0a: User-profile coverage scan"
+$currentSid = ''
+try {
+    $currentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+} catch { }
+
+$profileListKey = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'
+$profileRows = @()
+try {
+    Get-ChildItem -LiteralPath $profileListKey -ErrorAction Stop | ForEach-Object {
+        $sid = $_.PSChildName
+        # Skip built-in / service accounts (SYSTEM, LOCAL SERVICE, NETWORK SERVICE)
+        if ($sid -eq 'S-1-5-18' -or $sid -eq 'S-1-5-19' -or $sid -eq 'S-1-5-20') { return }
+        try {
+            $props = Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction Stop
+            $path  = $props.ProfileImagePath
+            if ([string]::IsNullOrWhiteSpace($path)) { return }
+            # Restrict to real interactive profiles under C:\Users\
+            if ($path -notlike 'C:\Users\*') { return }
+            $kind = if ($sid -like 'S-1-12-1-*')  { 'EntraID' }
+                    elseif ($sid -like 'S-1-5-21-*') { 'Local/AD' }
+                    else { 'Other' }
+            $profileRows += [pscustomobject]@{
+                SID         = $sid
+                Kind        = $kind
+                ProfilePath = $path
+                Current     = ($sid -eq $currentSid)
+            }
+        } catch { }
+    }
+} catch {
+    Add-Finding -Status 'INFO' -Section 'Coverage' -Title 'ProfileList enumeration failed' `
+        -Detail $_.Exception.Message
+}
+
+$entraProfiles = @($profileRows | Where-Object { $_.Kind -eq 'EntraID' })
+$otherEntra    = @($entraProfiles | Where-Object { -not $_.Current })
+
+$coverageBody = '<p>Captured-as user: <code>' + (HtmlEncode "$userDomain\$userName") + '</code>' +
+                ' &nbsp; SID: <code>' + (HtmlEncode $currentSid) + '</code></p>'
+if ($profileRows.Count -gt 0) {
+    $coverageBody += Convert-ObjectToHtmlTable -Objects $profileRows -Properties SID,Kind,ProfilePath,Current
+} else {
+    $coverageBody += '<p class="muted">No interactive user profiles found under HKLM ProfileList.</p>'
+}
+$coverageBody += '<p class="muted">Per-user data in this report (NGC keys via certutil, whoami /upn, HKCU PassportForWork policy) is captured for the running user only. Device-wide sections (event logs, dsregcmd, TPM, network) cover all users.</p>'
+
+if ($entraProfiles.Count -gt 1 -and $otherEntra.Count -gt 0) {
+    $names = ($otherEntra | ForEach-Object { Split-Path $_.ProfilePath -Leaf }) -join ', '
+    Add-Finding -Status 'WARN' -Section 'Coverage' `
+        -Title "Audit covers ONE user; $($otherEntra.Count) other Entra profile(s) on this device not audited" `
+        -Hypothesis 'Shared PC with multiple affected users - per-user findings (NGC keys, certutil, UPN drift, HKCU policy) are scoped to the running user only.' `
+        -Detail "This run captured per-user data for $userDomain\$userName (SID $currentSid). Other Entra-joined local profiles present on this device: $names. Re-run the audit while signed in as each of those users to get complete per-user coverage. Device-wide signals (event logs, dsregcmd, TPM, network) cover all users regardless."
+} elseif ($entraProfiles.Count -eq 1) {
+    Add-Finding -Status 'INFO' -Section 'Coverage' `
+        -Title 'Single Entra profile on this device - audit covers it' `
+        -Detail "Per-user findings reflect $userDomain\$userName, which is the only Entra-joined local profile in HKLM ProfileList."
+} elseif ($entraProfiles.Count -eq 0 -and $profileRows.Count -gt 0) {
+    Add-Finding -Status 'INFO' -Section 'Coverage' `
+        -Title 'No Entra-joined profiles detected via ProfileList' `
+        -Detail 'Running user may be local/AD rather than Entra-joined, or the audit is running in an unusual context. Trust-model inference in Step 1 (dsregcmd) is authoritative.'
+}
+
+Add-Section -Id 'coverage' -Title '0a. User-profile coverage (per-user data is current-user only)' `
+    -Description 'NGC keys, certutil output, whoami /upn, and HKCU PassportForWork policy in this report reflect the running user only. Device-wide signals (event logs, dsregcmd, TPM, network) cover all users. Re-run the audit as each affected user on shared PCs.' `
+    -BodyHtml $coverageBody
+
 # ---------- 1. dsregcmd /status ----------
 
 Write-Host "[*] Step 1: dsregcmd /status"
